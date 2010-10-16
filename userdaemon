@@ -4,6 +4,8 @@ require 'json'
 require 'socket'
 require 'timeout'
 
+TIMEOUT = 1800 # Daemon shuts down after half an hour of non-use
+
 def random_string(length=10)
 	chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 	password = ''
@@ -149,7 +151,7 @@ def safe
 	end
 end
 
-while(status = select((serv ? [serv] : [])+ socks.keys, socks.select { |k,v| k if v.writable? }.map {|e| e[0]}, (serv ? [serv] :[]) + socks.keys, 1800))
+while(status = select((serv ? [serv] : [])+ socks.keys, socks.select { |k,v| k if v.writable? }.map {|e| e[0]}, (serv ? [serv] :[]) + socks.keys, TIMEOUT))
 	r,w,e = *status
 
 	e.each do |sock|
