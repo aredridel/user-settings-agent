@@ -13,8 +13,9 @@ if($auth) {
 	$info = stream_get_contents($stream);
 	fclose($stream);
 	$info = json_decode($info);
-	echo "Yes and info is ";
-	print_r($info);
+	setcookie('key', $info->key);
+	setcookie('socket', $info->socket);
+	header('Location: menu');
 } else {
 	echo "No";
 }
