@@ -77,24 +77,33 @@ class Handler
 			send("cmd_" + cmd.upcase, args)
 		rescue NoMethodError => e
 			puts e if STDIN.tty?
-			write "400 BAD\n"
+			queue "400 BAD\n"
 		rescue
 			puts $! if STDIN.tty?
-			write "500 INTERNAL ERROR\n"
+			queue "500 INTERNAL ERROR\n"
 			@state = :do_command
 		end
 	end
 
-	def cmd_END(args)
-		@sock.write("200 OK\n")
+	def cmd_EXIT(args)
+		queue("200 OK\n")
+		queue :finish_EXIT
+	end
+
+	def finish_EXIT
 		exit
 	end
 
 	def cmd_WRITE(file)
 		@fd = File.open(file, 'w')
-		write "100 Continue\n"
+		queue "100 Continue\n"
 		@state = :do_data
 		@command = 'WRITE'
+	end
+
+	def cmd_QUIT(file)
+		queue "200 OK\n"
+		queue :close
 	end
 
 	def do_data(l)
@@ -116,15 +125,24 @@ class Handler
 
 	def finish_WRITE
 		@fd.close
-		write "200 OK\n"
+		queue "200 OK\n"
 	end
 
-	def write(l)
+	def queue(l)
 		@queue << l
 	end
 
 	def handle_write
-		@sock.write(@queue.shift)
+		a = @queue.shift
+		if(a.instance_of? Symbol)
+			send(a)
+		else
+			begin
+				@sock.write(a)
+			rescue Errno::EPIPE
+				close
+			end
+		end
 	end
 
 	def writable?
@@ -180,10 +198,12 @@ while(status = select((serv ? [serv] : [])+ socks.keys, socks.select { |k,v| k i
 		else
 			safe { socks[sock].handle_read }
 		end
+		next
 	end
 
 	w.each do |sock|
 		safe { socks[sock].handle_write }
+		next
 	end
 
 	socks.keys.each do |sock|
