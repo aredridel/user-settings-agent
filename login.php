@@ -12,7 +12,9 @@ if($auth) {
 	stream_set_blocking($stream, true);
 	$info = stream_get_contents($stream);
 	fclose($stream);
-	echo "Yes and info is $info";
+	$info = json_decode($info);
+	echo "Yes and info is ";
+	print_r($info);
 } else {
 	echo "No";
 }
