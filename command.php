@@ -46,6 +46,7 @@ if($_POST['away']) {
 }
 
 fclose($s);
-echo ("OK!");
+
+header("Location: menu");
 
 ?>
