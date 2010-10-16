@@ -1,5 +1,2 @@
-<form action='command' method='post'>
+<a href='vacation'>Set a vacation or out of office message</a>
 
-<textarea name='away'></textarea>
-<input type='submit'>
-</form>
