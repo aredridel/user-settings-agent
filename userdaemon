@@ -21,7 +21,9 @@ begin
 rescue Errno::EEXIST
 end
 
+um = File.umask(0000)
 serv = UNIXServer.new("#{DIR}/sock")
+File.umask(um)
 
 puts ({"socket" => DIR+'/sock', 'key' => KEY}).to_json
 
