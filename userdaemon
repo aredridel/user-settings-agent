@@ -88,12 +88,12 @@ class Handler
 		end
 	end
 
-	def cmd_EXIT(args)
+	def cmd_SHUTDOWN(args)
 		queue("200 OK\n")
-		queue :finish_EXIT
+		queue :finish_SHUTDOWN
 	end
 
-	def finish_EXIT
+	def finish_SHUTDOWN
 		exit
 	end
 
