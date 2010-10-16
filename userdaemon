@@ -96,7 +96,7 @@ class Handler
 	end
 
 	def do_data(l)
-		if(l == '.')
+		if(l.strip == '.')
 			send('finish_'+@command)
 			@command = nil
 			@state = :do_command
@@ -114,6 +114,7 @@ class Handler
 
 	def finish_WRITE
 		@fd.close
+		write "200 OK\n"
 	end
 
 	def write(l)
