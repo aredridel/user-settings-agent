@@ -104,6 +104,16 @@ class Handler
 		@command = 'WRITE'
 	end
 
+	def cmd_MKDIR(dir)
+		begin
+			Dir.mkdir(dir)
+		rescue Errno::EEXIST
+			queue "412 Already exists\n"
+		else
+			queue "201 Created\n"
+		end
+	end
+
 	def cmd_QUIT(file)
 		queue "200 OK\n"
 		queue :close
