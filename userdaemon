@@ -1,0 +1,194 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'socket'
+require 'timeout'
+
+def random_string(length=10)
+	chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+	password = ''
+	length.times { password << chars[rand(chars.size)] }
+	password
+end
+
+DIR = "/tmp/userdaemon-#{Process.uid}"
+KEY = random_string
+
+begin
+	Dir.mkdir(DIR, 0755)
+rescue Errno::EEXIST
+end
+
+serv = UNIXServer.new("#{DIR}/sock")
+
+puts ({"socket" => DIR+'/sock', 'key' => KEY}).to_json
+
+Kernel.exit! if fork
+
+if(!STDIN.tty?) 
+	Process.setsid
+	STDIN.close
+	STDOUT.close
+	STDERR.close
+	Kernel.exit! if fork
+end
+
+socks = {}
+
+at_exit do
+	File.unlink(DIR+'/sock')
+end
+
+class Handler
+	def initialize(sock)
+		@closed = false
+		@queue = []
+		@sock = sock
+		@state = :do_key
+	end
+
+	def handle_read
+		begin
+			l = @sock.readline
+			send(@state, l)
+		rescue EOFError
+			self.close
+		end
+	end
+
+	def do_key(key)
+		if(key.strip != KEY)
+			puts "Bad key: #{key}"
+			close
+		else
+			@queue << "200 OK\n"
+			@state = :do_command
+		end
+	end
+
+	def do_command(l)
+		cmd, args = l.strip.split(/ /, 2)
+		cmd ||= ''
+		begin
+			send("cmd_" + cmd.upcase, args)
+		rescue NoMethodError => e
+			puts e if STDIN.tty?
+			write "400 BAD\n"
+		rescue
+			puts $! if STDIN.tty?
+			write "500 INTERNAL ERROR\n"
+			@state = :do_command
+		end
+	end
+
+	def cmd_END(args)
+		@sock.write("200 OK\n")
+		exit
+	end
+
+	def cmd_WRITE(file)
+		@fd = File.open(file, 'w')
+		write "100 Continue\n"
+		@state = :do_data
+		@command = 'WRITE'
+	end
+
+	def do_data(l)
+		if(l == '.')
+			send('finish_'+@command)
+			@command = nil
+			@state = :do_command
+		else
+			if(l[0,2] == '..')
+				l = l[1,-1]
+			end
+			send('data_'+@command, l)
+		end
+	end
+
+	def data_WRITE(data)
+		@fd.write(data)
+	end
+
+	def finish_WRITE
+		@fd.close
+	end
+
+	def write(l)
+		@queue << l
+	end
+
+	def handle_write
+		@sock.write(@queue.shift)
+	end
+
+	def writable?
+		!@queue.empty?
+	end
+
+	def handle_error
+		close
+	end
+
+	def close
+		send('finish_'+@command) if(@command) 
+		@closed = true
+		@sock.close
+	end
+
+	def closed?
+		@closed
+	end
+
+end
+
+def safe
+	begin
+		yield
+	rescue EOFError
+	end
+end
+
+while(status = select((serv ? [serv] : [])+ socks.keys, socks.select { |k,v| k if v.writable? }.map {|e| e[0]}, (serv ? [serv] :[]) + socks.keys, 1800))
+	r,w,e = *status
+
+	e.each do |sock|
+		if socks[sock]
+			safe { socks[sock].handle_error }
+			socks.delete(sock)
+		end
+		if sock == serv
+			serv = false
+		end
+		if r.include? sock
+			r.delete sock
+		end
+		if w.include? sock
+			w.delete sock
+		end
+	end
+
+	r.each do |sock|
+		if(sock == serv)
+			a = serv.accept
+			socks[a] = Handler.new(a)
+		else
+			safe { socks[sock].handle_read }
+		end
+	end
+
+	w.each do |sock|
+		safe { socks[sock].handle_write }
+	end
+
+	socks.keys.each do |sock|
+		if(socks[sock].closed?)
+			socks.delete(sock)
+		end
+	end
+
+	if !serv and socks.empty?
+		exit
+	end
+
+end
