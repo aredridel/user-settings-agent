@@ -2,7 +2,7 @@
 
 require 'json'
 require 'socket'
-require 'timeout'
+require 'etc'
 
 TIMEOUT = 1800 # Daemon shuts down after half an hour of non-use
 
@@ -15,6 +15,9 @@ end
 
 DIR = "/tmp/userdaemon-#{Process.uid}"
 KEY = random_string
+
+e = Etc.getpwuid(Process.uid)
+Dir.chdir(e.dir)
 
 begin
 	Dir.mkdir(DIR, 0755)
