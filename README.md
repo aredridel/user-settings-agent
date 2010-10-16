@@ -11,3 +11,21 @@ The primary purpose of this is to let my users schedule cronjobs, alter
 vacation messages, and change passwords, all securely and without any unusual
 setuid code.  Since my servers allow SSH access anyway, users don't gain any
 privilege with this, just convenience
+
+Clients must expect a 500 in response to any command.
+
+Commands:
+
+MKDIR dirname
+	Returns 201 if created, 412 if the directory already exists.
+
+WRITE filename
+	Send data followed by .
+	Sends 100 when ready for the data.
+	Returns 200 on success.
+
+SHUTDOWN
+	shutdown the user daemon
+
+QUIT
+	Returns 200, then closes the connection.
