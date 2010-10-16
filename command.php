@@ -9,21 +9,43 @@ fwrite($s, $key."\n");
 $stat  = fgets($s);
 if($stat{0} != '2') die("Error: $stat");
 
-if($_POST['away']) {
-	fwrite($s, "WRITE /tmp/away\n");
-	$stat  = fgets($s);
-	if($stat{0} != '1') die("Error: $stat");
-	fwrite($s, $_POST['away']);
-	fwrite($s, "\n");
+define('CONT', 1);
+define('OK', 2);
+define('ERROR', 4);
+define('ABORT', 5);
+
+function command($s, $command, $arg = '') {
+	if(is_array($arg)) $arg = join(' ', $arg);
+	if($arg) $arg = " $arg";
+	fwrite($s, "$command$arg\n");
+	$stat = fgets($s);
+	if($stat{0} == '1') return CONT;
+	if($stat{0} == '2') return OK;
+	if($stat{0} == '4') return ERROR;
+	if($stat{0} == '5') return ABORT;
+}
+
+function send_data($s, $data) {
+	fwrite($s, $data);
+	if($data{strlen($data)} != "\n") fwrite($s, "\n");
 	fwrite($s, ".\n");
-	$stat  = fgets($s);
-	if($stat{0} != '2') die("Error: $stat");
-	fwrite($s, "QUIT\n");
-	$stat  = fgets($s);
-	if($stat{0} != '2') die("Error: $stat");
+	$stat = fgets($s);
+	if($stat{0} == '1') return CONT;
+	if($stat{0} == '2') return OK;
+	if($stat{0} == '4') return ERROR;
+	if($stat{0} == '5') return ABORT;
+}
+
+
+if($_POST['away']) {
+	$v = command($s, "MKDIR", ".vacation");
+	if($v != ERROR and $v != OK) die("Could not make vacation settings folder"); 
+	if(command($s, "WRITE", ".vacation/message") != CONT) die("Could not start writing message");
+	if(send_data($s, $_POST['away']) != OK) die("Could not write message");
+	command($s, "QUIT");
 }
 
 fclose($s);
-echo ("OK: $stat");
+echo ("OK!");
 
 ?>
