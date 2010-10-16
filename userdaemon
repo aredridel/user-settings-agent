@@ -97,11 +97,11 @@ class Handler
 		exit
 	end
 
-	def cmd_WRITE(file)
+	def cmd_PUT(file)
 		@fd = File.open(file, 'w')
 		queue "100 Continue\n"
 		@state = :do_data
-		@command = 'WRITE'
+		@command = 'PUT'
 	end
 
 	def cmd_MKDIR(dir)
@@ -132,11 +132,11 @@ class Handler
 		end
 	end
 
-	def data_WRITE(data)
+	def data_PUT(data)
 		@fd.write(data)
 	end
 
-	def finish_WRITE
+	def finish_PUT
 		@fd.close
 		queue "200 OK\n"
 	end

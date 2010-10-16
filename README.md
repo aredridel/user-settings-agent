@@ -20,16 +20,16 @@ Clients must expect a 500 in response to any command.
 
 Returns 201 if created, 412 if the directory already exists.
 
-### WRITE filename
+### PUT filename
 
 Send data followed by .
 Sends 100 when ready for the data.
 Returns 200 on success.
 
-### SHUTDOWN
-
-shutdown the user daemon
-
 ### QUIT
 
 Returns 200, then closes the connection.
+
+### SHUTDOWN
+
+shutdown the user daemon
