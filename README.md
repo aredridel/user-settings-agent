@@ -17,15 +17,19 @@ Clients must expect a 500 in response to any command.
 ## Commands
 
 ### MKDIR dirname
-	Returns 201 if created, 412 if the directory already exists.
+
+Returns 201 if created, 412 if the directory already exists.
 
 ### WRITE filename
-	Send data followed by .
-	Sends 100 when ready for the data.
-	Returns 200 on success.
+
+Send data followed by .
+Sends 100 when ready for the data.
+Returns 200 on success.
 
 ### SHUTDOWN
-	shutdown the user daemon
+
+shutdown the user daemon
 
 ### QUIT
-	Returns 200, then closes the connection.
+
+Returns 200, then closes the connection.
