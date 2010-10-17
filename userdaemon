@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'json'
 require 'socket'
 require 'etc'
 
@@ -28,7 +27,8 @@ um = File.umask(0000)
 serv = UNIXServer.new("#{DIR}/sock")
 File.umask(um)
 
-puts ({"socket" => DIR+'/sock', 'key' => KEY}).to_json
+puts "SOCKET="+DIR+'/sock'
+puts "KEY="+KEY
 
 Kernel.exit! if fork
 

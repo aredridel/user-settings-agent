@@ -12,9 +12,14 @@ if($auth) {
 	stream_set_blocking($stream, true);
 	$info = stream_get_contents($stream);
 	fclose($stream);
-	$info = json_decode($info);
-	setcookie('key', $info->key);
-	setcookie('socket', $info->socket);
+	$lines = explode("\n", trim($info));
+	$data = array();
+	foreach($lines as $l) {
+		list($k, $v) = explode("=", $l);
+		$data[$k] = $v;
+	}
+	setcookie('key', $data['KEY']);
+	setcookie('socket', $data['SOCKET']);
 	header('Location: menu');
 } else {
 	echo "No";
