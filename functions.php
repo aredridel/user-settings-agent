@@ -53,7 +53,10 @@ function userdaemon_connect() {
 	$key = $_COOKIE['key'];
 	$socket = $_COOKIE['socket'];
 
-	if(!$s = fsockopen("unix://".$socket, null, $errno, $errstr)) die("could not open socket: ".$errstr);
+	if(!$s = fsockopen("unix://".$socket, null, $errno, $errstr)) {
+		header("Location: index?flash=timeout");
+		exit();
+	}
 
 	fwrite($s, $key."\n");
 	$stat  = fgets($s);
