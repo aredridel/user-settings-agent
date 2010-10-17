@@ -104,6 +104,31 @@ class Handler
 		@command = 'PUT'
 	end
 
+	def data_PUT(data)
+		@fd.write(data)
+	end
+
+	def finish_PUT
+		@fd.close
+		queue "200 OK\n"
+	end
+
+	def cmd_APPEND(file)
+		@fd = File.open(file, 'a')
+		queue "100 Continue\n"
+		@state = :do_data
+		@command = "APPEND"
+	end
+
+	def data_APPEND(line)
+		@fd.write(line)
+	end
+
+	def finish_APPEND(line)
+		@fd.close
+		queue "200 OK\n"
+	end
+
 	def cmd_MKDIR(dir)
 		begin
 			Dir.mkdir(dir)
@@ -130,15 +155,6 @@ class Handler
 			end
 			send('data_'+@command, l)
 		end
-	end
-
-	def data_PUT(data)
-		@fd.write(data)
-	end
-
-	def finish_PUT
-		@fd.close
-		queue "200 OK\n"
 	end
 
 	def queue(l)
