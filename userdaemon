@@ -129,6 +129,15 @@ class Handler
 		queue "200 OK\n"
 	end
 
+	def cmd_LISTWRITABLE(dir)
+		Dir.foreach(dir) do |e|
+			if(File.writable?(dir + '/' + e))
+				queue "200-#{e}\n"
+			end
+		end
+		queue "200 OK\n"
+	end
+
 	def cmd_MKDIR(dir)
 		begin
 			Dir.mkdir(dir)
