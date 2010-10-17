@@ -1,41 +1,8 @@
 <?php
 
-$key = $_COOKIE['key'];
-$socket = $_COOKIE['socket'];
+require('functions.php');
 
-if(!$s = fsockopen("unix://".$socket, null, $errno, $errstr)) die("could not open socket: ".$errstr);
-
-fwrite($s, $key."\n");
-$stat  = fgets($s);
-if($stat{0} != '2') die("Error: $stat");
-
-define('CONT', 1);
-define('OK', 2);
-define('ERROR', 4);
-define('ABORT', 5);
-
-function command($s, $command, $arg = '') {
-	if(is_array($arg)) $arg = join(' ', $arg);
-	if($arg) $arg = " $arg";
-	fwrite($s, "$command$arg\n");
-	$stat = fgets($s);
-	if($stat{0} == '1') return CONT;
-	if($stat{0} == '2') return OK;
-	if($stat{0} == '4') return ERROR;
-	if($stat{0} == '5') return ABORT;
-}
-
-function send_data($s, $data) {
-	fwrite($s, $data);
-	if($data{strlen($data)} != "\n") fwrite($s, "\n");
-	fwrite($s, ".\n");
-	$stat = fgets($s);
-	if($stat{0} == '1') return CONT;
-	if($stat{0} == '2') return OK;
-	if($stat{0} == '4') return ERROR;
-	if($stat{0} == '5') return ABORT;
-}
-
+$s = userdaemon_connect();
 
 if($_POST['away']) {
 	$v = command($s, "MKDIR", ".vacation");
@@ -45,7 +12,7 @@ if($_POST['away']) {
 	command($s, "QUIT");
 }
 
-fclose($s);
+userdaemon_disconnect($s);
 echo ("OK!");
 
 ?>
