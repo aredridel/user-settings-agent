@@ -14,5 +14,6 @@ if($_POST['away']) {
 
 userdaemon_disconnect($s);
 echo ("OK!");
+header("Location: menu");
 
 ?>
