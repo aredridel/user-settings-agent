@@ -16,6 +16,10 @@ Clients must expect a 500 in response to any command.
 
 ## Commands
 
+### LISTWRITABLE dir
+
+Returns a list of writable files in `dir`
+
 ### MKDIR dirname
 
 Returns 201 if created, 412 if the directory already exists.
